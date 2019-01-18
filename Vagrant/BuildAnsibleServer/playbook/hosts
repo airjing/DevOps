@@ -1,3 +1,39 @@
+[all:vars]
+ntp_server = ntp.ubuntu.com
+
+[production:vars]
+db_primary_host=dbprod.azure.io
+db_primary_port=5432
+db_replica_host=dbprepl.azure.io
+db_name=widget_production
+db_user=widgetuser
+db_password=P@ssword
+rabbitmq_host=mqprod.azure.io
+rabbitmq_port=5672
+
+[preprod:vars]
+db_primary_host=dbpprod.azure.io
+db_primary_port=5432
+db_replica_host=dbpprepl.azure.io
+db_name=widget_production
+db_user=widgetuser
+db_password=P@ssword
+rabbitmq_host=mqpprod.azure.io
+rabbitmq_port=5672
+
+[devtest:vars]
+db_primary_host=dbdevtest.azure.io
+db_primary_port=5432
+db_replica_host=dbdevtestrepl.azure.io
+db_name=widget_production
+db_user=widgetuser
+db_password=P@ssword
+rabbitmq_host=mqdevtest.azure.io
+rabbitmq_port=5672
+
 [webservers]
-ansible ansible_host=127.0.0.1 ansible_port=22
 web1 ansible_host=192.168.2.167 ansible_port=22
+
+[vagrant]
+192.168.2.167:22
+192.168.2.172:22
