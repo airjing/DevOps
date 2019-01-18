@@ -1,7 +1,6 @@
 - name: Configure webserver with nginx and TLS enabled
-  hosts: vagrant
+  hosts: webservers
   become: True
-  gather_facts: True
   vars:
     key_file: /etc/nginx/ssl/nginx.key
     cert_file: /etc/nginx/ssl/nginx.crt
@@ -9,14 +8,6 @@
     server_name: localhost
     issue_cert: openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -subj /CN=ansible -keyout nginx.key -out nginx.crt
   tasks:
-  - name: get hostname
-    command: hostname
-    register: hostname
-    ignore_errors: True
-  - debug: msg="{{ hostname.stdout }}"
-  - debug: var=ansible_distribution
-  - debug: msg="{{ token }}"
-    
   - name: install nginx
     apt: name=nginx update_cache=yes cache_valid_time=3600
 

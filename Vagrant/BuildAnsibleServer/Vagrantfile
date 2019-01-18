@@ -6,7 +6,6 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 Vagrant.configure("2") do |config|
-  config.ssh.insert_key = false
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
@@ -34,7 +33,7 @@ Vagrant.configure("2") do |config|
   sudo apt -y install software-properties-common
   sudo apt-add-repository --yes --update ppa:ansible/ansible
   sudo apt -y install ansible
-  sudo apt -y install cifs-utils,bind9,dnsutils
+  sudo apt -y install cifs-utils
   sudo apt -y upgrade
   sudo cp -p /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
   # generate privatekey for ansible
@@ -95,10 +94,6 @@ Vagrant.configure("2") do |config|
     w.vm.provision "bootstrap", type: "shell", run: "never" do |s|
       s.inline = "bootstrap"
     end
-  config.vm.define "web2" do |w2|
-    w2.vm.box = "generic/ubuntu1604"
-    w2.vm.hostname = "web2"
-  end
   end
 
 
