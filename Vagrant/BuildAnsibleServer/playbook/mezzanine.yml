@@ -101,6 +101,90 @@ tasks:
   become: True
   become_user: postgres
 
+- name: apply migrations to create the database, collect static content
+  django_manage:
+    command: "{{ item }}"
+    app_path: "{{ proj_path }}"
+    virtualenv: "{{ venv_path }}"
+  with_items:
+    - syncdb
+    - collectstatic
+
+- name: set the site id
+  script: scripts/setsite.py
+  environment:
+    PATH: "{{ venv_path }}/bin"
+    PROJECT_DIR: "{{ proj_path }}"
+    PROJECT_APP: "{{ proj_app }}"
+    WEBSITE_DOMAIN: "{{ live_hostname }}"
+
+- name: set the admin password
+  script: scripts/setadmin.py
+  environment:
+    PATH: "{{ vent_path }}/bin"
+    PROJECT_DIR: "{{ proj_path }}"
+    PROJECT_APP: "{{ proj_app }}"
+    ADMIN_PASSWORD: "{{ admin_pass }}"
+
+- name: set the gunicorn config file
+  template:
+    src: templates/gunicorn.conf.py.j2
+    dest: "{{ proj_path }}/gunicorn.conf.py"
+
+- name: set the supervisor config file
+  template:
+    src: templates/supervisor.conf.j2
+    dest: /etc/supervisor/conf.d/mezzanine.conf
+  become: True
+  notify: restart supervisor
+
+- name: set the nginx config file
+  template:
+    src: templates/nginx.conf.j2
+    dest: /etc/nginx/sites-available/mezzanine.conf
+  notify: restart nginx
+  become: True
+
+- name: enable the nginx config file
+  file:
+      src: /etc/nginx/sites-available/mezzanine.conf
+      dest: /etc/nginx/sites-enabled/mezzanine.conf
+      state: link
+  become: True
+
+- name: remove the default nginx config file
+    file: path=/etc/nginx/sites-enabled/default state=absent
+    notify: restart nginx
+    become: True
+
+- name: ensure config path exists
+    file: path={{ conf_pah }} state=directory
+    sudo: True
+    when: tls_enabled
+  
+- name: create tls certificates
+    command: >
+      openssl req -new -x509 -nodes -out {{ proj_name }}.crt -keyout {{ proj_name }}.key
+      -subj 'CN={{ domains[0] }}' -days 3650
+    chdir={{ conf_path }}
+    creates={{ conf_pah }}/{{ proj_name }}.crt
+  sudo: True
+  when: tls_enabled
+  notify: restart nginx
+
+- name: install poll twitter cron job
+    cron: name="poll twitter" minute="*/5" user={{ user }} job="{{ manage }} poll_twitter"
+handlers:
+  - name: restart supervisor
+    supervisorctl: name=gunicorn_mezzanine state=restarted
+    sudo: True
+  - name: restart nginx
+    service: name=nginx state=restarted
+    sudo: True
+
+
+
+
 
 
 
