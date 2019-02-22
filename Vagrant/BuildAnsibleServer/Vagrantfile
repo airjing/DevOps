@@ -73,7 +73,12 @@ Vagrant.configure("2") do |config|
       run = "always"
       s.inline = $script
     end
-    a.vm.synced_folder "./playbook","/home/vagrant/playbook",type:"smb",smb_password:"P@ssword",smb_username:"Administrator"    
+    # if synced_folder mount failed on domain joined machine, manually mount it.
+    # sudo mount.cifs //%hostip%/%sharename% /home/vagrant/playbook -o username=username,domain=domainname,password=passwd
+    # run net share on host to get sharename
+    # copy ssh pub key to ansible host
+    # ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@127.0.0.1
+    a.vm.synced_folder "./playbook","/home/vagrant/playbook",type:"smb",smb_host:"127.0.0.1",smb_password:"P@ssword",smb_username:"Administrator"    
   end
   
   config.vm.define "web1" do |w|
