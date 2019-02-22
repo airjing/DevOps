@@ -444,7 +444,7 @@ function Export-DockerImages
         $imagepath = "$ExportToPath\$imageshortname-$tag.tar"
         if($imagepath -notmatch "<none>")
         {
-            & docker $image[0] save -o $imagepath
+            & docker image --output $imagepath $image[0]
         }          
     }
 }
