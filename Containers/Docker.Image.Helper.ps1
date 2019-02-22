@@ -444,7 +444,7 @@ function Export-DockerImages
         $imagepath = "$ExportToPath\$imageshortname-$tag.tar"
         if($imagepath -notmatch "<none>")
         {
-            & docker image --output $imagepath $image[0]
+            & docker save --output $imagepath $image[0]
         }          
     }
 }
@@ -494,4 +494,4 @@ function Pull-DockerImages
 
 Pull-DockerImages
 Export-DockerImages -ExportToPath $ImageStore
-Import-DockerImages -ImportFromPath $ImageStore -TarFileList "hello.tar;abc.tar"
+Import-DockerImages -ImportFromPath $ImageStore
