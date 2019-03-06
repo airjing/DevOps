@@ -1,1 +1,1 @@
-docker run microsoft/nanoserver cmd /c Hello World!
+docker run microsoft/nanoserver cmd /c 'hostname'

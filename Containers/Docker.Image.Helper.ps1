@@ -484,14 +484,14 @@ function Pull-DockerImages
     $dockerinfo = & docker info
     if($dockerinfo[17] -match "windows")
     {
-        #Get-DockerImages
+        Get-DockerImages
     }
     if($dockerinfo[28] -match "linux")
     {
-        #Get-DockerImages -Platform "linux"
+        Get-DockerImages -Platform "linux"
     }
 }
 
-Pull-DockerImages
-Export-DockerImages -ExportToPath $ImageStore
-Import-DockerImages -ImportFromPath $ImageStore
+#Pull-DockerImages
+#Export-DockerImages -ExportToPath $ImageStore
+#Import-DockerImages -ImportFromPath $ImageStore

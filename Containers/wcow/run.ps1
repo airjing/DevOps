@@ -1,1 +1,1 @@
-docker run -d -p 8000:80 iis-dockerfile ping -t localhost
+docker run -d -p 8000:80 iisonwindowsservercore ping -t localhost
