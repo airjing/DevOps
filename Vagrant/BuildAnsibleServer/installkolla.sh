@@ -3,16 +3,17 @@
 mkdir Repos
 cd Repos
 git clone https://github.com/openstack/kolla
-sudo -y apt install python-pip tox
+sudo apt -y install python-pip tox
 pip install --upgrade pip==9.0.3
 cd Repos/kolla
-git checkout stable/mitaka
+git checkout stable/rocky
 cd ..
-pip install -r kolla/requirements.txt -r kolla/test-requirements.txt
-pip install kolla/
+sudo pip install -r kolla/requirements.txt -r kolla/test-requirements.txt
+sudo pip install kolla/
 cd kolla
 cp -r etc/kolla /etc/
 sudo apt -y install python-devel libffi-devel openssl-devel gcc
 pip install -U python-openstackclient python-neutronclient
 pip install tox
-tox -e genconfig
+cd Repos/kolla
+tox -e genconfigkolla
