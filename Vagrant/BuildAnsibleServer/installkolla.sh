@@ -4,6 +4,7 @@ mkdir Repos
 cd Repos
 git clone https://github.com/openstack/kolla
 sudo apt -y install python-pip tox
+sudo pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 pip install --upgrade pip==9.0.3
 cd Repos/kolla
 git checkout stable/rocky
@@ -16,4 +17,4 @@ sudo apt -y install python-devel libffi-devel openssl-devel gcc
 pip install -U python-openstackclient python-neutronclient
 pip install tox
 cd Repos/kolla
-tox -e genconfigkolla
+tox -e genconfig

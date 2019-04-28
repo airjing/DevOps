@@ -103,6 +103,17 @@ Vagrant.configure("2") do |config|
     comp.vm.box = "generic/ubuntu1604"
     comp.vm.hostname = "web2"
   end
+  config.vm.define "kollahost" do |host|
+    host.vm.box = "generic/ubuntu1604"
+    host.vm.hostname = "kollahost"
+    host.vm.provider "hyperv" do |h|
+      h.vmname = "Vagrant-Kolla-Host"
+      h.cpus = 8
+      h.memory = 8192
+      h.linked_clone = true
+      h.enable_virtualization_extensions = true
+    end
+  end
   end
 
 
