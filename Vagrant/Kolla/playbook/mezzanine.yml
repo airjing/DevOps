@@ -13,11 +13,7 @@
     manage: "{{ python }}/{{ proj_path }}/manage.py"
     live_hostname: web1.azure.io
     domains:
-<<<<<<< HEAD
-      - 127.0.0.1:8000
-=======
       - web1.azure.io
->>>>>>> dab323b334897c75feba528079853f334cdbf8a7
       - ctrl.local
     repo_url: https://github.com/ansiblebook/mezzanine_example.git
     locale: en_US.UTF-8
@@ -129,16 +125,6 @@
       template:
         src=templates/local_settings.py.j2
         dest={{ proj_path }}/local_settings.py
-<<<<<<< HEAD
-    #- name: apply migrations to create the database, collect static content
-      #django_manage:
-        #command: "{{ item }}"
-        #app_path: "{{ proj_path }}"
-        #virtualenv: "{{ venv_path }}"
-      #with_items:
-        #- syncdb
-        #- collectstatic
-=======
     - name: apply migrations to create the database, collect static content
       django_manage:
         command: "{{ item }}"
@@ -147,7 +133,6 @@
       with_items:
         - syncdb
         - collectstatic
->>>>>>> dab323b334897c75feba528079853f334cdbf8a7
     - name: set the site id
       script: scripts/setsite.py
       environment:
