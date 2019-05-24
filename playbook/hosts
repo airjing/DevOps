@@ -1,0 +1,10 @@
+[ansible]
+ubuntu ansible_host=192.168.2.90 ansible_port=22 ansible_user=shaojc
+
+[vagrant]
+192.168.2.167:22
+192.168.2.172:22
+
+[kolla]
+kolla01 ansible_host=192.168.2.201  ansible_port=22 ansible_user=ansible
+kolla02 ansible_host=192.168.2.202  ansible_port=22 ansible_user=ansible

@@ -1,6 +1,0 @@
-[webservers]
-web1 ansible_host=192.168.2.179 ansible_port=22
-
-[vagrant]
-192.168.2.167:22
-192.168.2.172:22
