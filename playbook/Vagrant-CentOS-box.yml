@@ -1,0 +1,101 @@
+---
+# Ansible playbook to prepare a CentOS box for Vagrant.
+# Manual Stpes before run this playbook
+# Create a VM in Hyper-V with CentOS1810 minimal installation.
+# During centos installation, create vagrant account with password vagrant.
+# Also change root password to vagrant.
+# Enable eth0 by nmonline
+# 
+- hosts: box
+  vars:
+    
+  remote_user: root
+  tasks:
+  - name: Install net-tools
+    yum:
+      name: net-tools
+      state: latest
+    become: yes
+  - name: Import gpg key from elrepo
+    rpm_key:
+      state: present
+      key: https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+    become: yes
+  - name: Install elrepo for CentOS7
+    yum:
+      name: http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
+      state: present
+    become: yes
+  - name: Install latest kernel from elrepo
+    yum:
+      name: kernel-ml
+      state: present
+      disablerepo: "*"
+      enablerepo: elrepo-kernel
+    become: yes
+  - name: Change grub settings
+    lineinfile:
+      path: /etc/default/grub
+      regexp: '^GRUB_DEFAULT=saved'
+      line: 'GRUB_DEFAULT=0'
+    become: yes
+  - name: Update grub settings
+    shell: grub2-mkconfig -o /boot/grub2/grub.cfg
+    become: yes
+  - name: Set password-less command execution for vagrant account
+    lineinfile:
+      path: /etc/sudoers
+      state: present
+      insertafter: EOF
+      line: 'vagrant ALL=(ALL) NOPASSWD:ALL'
+      validate: /usr/sbin/visudo -cf %s
+    become: yes
+  - name: Create .ssh folder for vagrant account
+    file:
+      path: /home/vagrant/.ssh
+      state: directory
+      state: directory
+      mode: 0700
+  - name: Download insecure keypair
+    get_url: 
+      url: https://raw.githubusercontent.com/mitchellh/vagrant/master/keys/vagrant.pub
+      dest: /home/vagrant/.ssh/authorized_keys
+      mode: 0600
+      owner: vagrant
+      group: vagrant
+    become: yes
+  - name: Update all packages to latest
+    yum:
+      name: "*"
+      state: latest
+      update_cache: yes
+    become: yes
+  - name: Speed up SSH connections
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      insertafter: EOF
+      line: 'UseDNS no'
+      state: present
+    become: yes
+  - name: Remove kernel 3.10
+    yum:
+      name: 
+        - kernel-tools-3.10*
+        - kernel-3.10.*
+        - kernel-tools-libs-3.10*
+      state: absent
+    become: yes
+  - name: delete tmp folder
+    file: 
+      path: 
+        - /tmp/* 
+        - /var/log/wtmp
+        - /var/log/btmp
+      state: absent
+    become: yes
+  - name: clean up history
+    shell: history -c
+    become: yes
+  - name: Shutdown machine
+    shell: shutdown -h now
+    become: yes

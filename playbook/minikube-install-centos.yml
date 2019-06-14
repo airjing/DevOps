@@ -1,0 +1,144 @@
+---
+# Ansible playbook to install minikube on centos7
+# https://computingforgeeks.com/how-to-run-minikube-on-kvm/
+- hosts: minikube
+  gather_facts: no
+  vars:
+
+  remote_user: root
+  tasks:
+  - name: Get the latest version number of kubernetes
+    shell: "curl https://storage.googleapis.com/kubernetes-release/release/stable.txt"      
+    register: version
+  - debug: var=version.stdout 
+
+  - name: Download latest release to local
+    get_url: 
+      url: 'https://storage.googleapis.com/kubernetes-release/release/{{ version.stdout }}/bin/linux/amd64/kubectl'
+      dest: /usr/local/bin/kubectl
+      mode: +x
+    become: yes
+  
+  - name: Install bash-completion
+    yum:
+      name:
+        - bash-completion
+      state: present
+    become: yes  
+
+  - name: Source bash completion
+    lineinfile:
+      path: ~/.bashrc
+      insertafter: EOF
+      line: source /usr/share/bash-completion/bash_completion
+      state: present
+
+  - name: Eanble shell autocompletion
+    shell: echo 'source <(kubectl completion bash)' >>~/.bashrc
+
+  - name: Check whether CPU support virtualization or not
+    shell: grep -E 'vmx|svm' /proc/cpuinfo
+    become: yes
+
+  - name: Set up stable repository
+    shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    become: yes
+
+#https://computingforgeeks.com/install-kvm-centos-rhel-ubuntu-debian-sles-arch/
+  - name: Install KVM & docker
+    yum:
+      name:
+        - qemu-kvm
+        - qemu-img
+        - virt-manager
+        - libvirt
+        - libvirt-python
+        - libvirt-client
+        - libvirt-daemon-kvm
+        - virt-install
+        - virt-viewer
+        - bridge-utils
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - "@^gnome-desktop-environment"
+      state: present
+    become: yes
+    notify: 
+      - reboot
+  - name: Remove kernel 3.10
+    yum:
+      name: 
+        - kernel-tools-3.10*
+        - kernel-3.10.*
+        - kernel-tools-libs-3.10*
+      state: absent
+    become: yes
+    notify:
+      - reboot
+    ignore_errors: yes
+
+  - name: Add user vagrant to libvirt group
+    user:
+      name: vagrant
+      state: present
+      groups: libvirt
+    become: yes    
+
+  - name: Enable libvirtd
+    service:
+      name: libvirtd
+      state: started
+      enabled: yes
+    become: yes
+
+  - name: Download kvm default network configuration file
+    get_url:
+      url: https://raw.githubusercontent.com/libvirt/libvirt/master/src/network/default.xml
+      dest: /tmp/kvm-network-default.xml
+
+  - name: Define kvm default network
+    shell: virsh net-define /tmp/kvm-network-default.xml && virsh net-start default
+    become: yes
+    ignore_errors: yes
+    # refer to https://computingforgeeks.com/how-to-create-and-configure-bridge-networking-for-kvm-in-linux/
+
+  - name: Enable docker
+    service:
+      name: docker
+      state: started
+      enabled: yes
+    become: yes
+
+  - name: Download latest Minikube
+    get_url:
+      url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+      dest: /tmp/minikube
+      mode: +x
+
+  - name: Install Minikube
+    shell: install /tmp/minikube /usr/local/bin
+    become: yes
+  
+#https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#vm-driver
+  - name: Install Docker Machine KVM driver
+    get_url:
+      url: https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-kvm2
+      dest: /usr/local/bin/docker-machine-driver-kvm2
+      mode: +x
+    become: yes
+
+  - name: Start Minikube
+    shell: minikube config set vm-driver kvm2 && minikube start
+
+  - name: Create a Deployment
+    shell: kubectl create deployment hello-node --image=gcr.io/hello-minikube-zero-install/hello-node
+
+  handlers:
+    - name: reboot
+      shell: reboot now
+      become: yes
+  
