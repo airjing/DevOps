@@ -8,16 +8,51 @@
   remote_user: root
   tasks:
   - name: Get the latest version number of kubernetes
-    shell: "curl https://storage.googleapis.com/kubernetes-release/release/stable.txt"      
+    shell: "curl https://storage.googleapis.com/kubernetes-release/release/stable.txt --connect-timeout 1"      
     register: version
+    ignore_errors: True
   - debug: var=version.stdout 
 
-  - name: Download latest release to local
+  - name: Download latest release to local(from Google)
     get_url: 
       url: 'https://storage.googleapis.com/kubernetes-release/release/{{ version.stdout }}/bin/linux/amd64/kubectl'
       dest: /usr/local/bin/kubectl
       mode: +x
+      timeout: 1
+    register: result
+    ignore_errors: True
     become: yes
+  
+  - name: Change CentOS7 source to aliyun
+    shell: |
+      mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+      curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+      sudo yum makecache
+
+  - name: Change docker-ce source to aliyun
+    yum_repository:
+      name: docker-ce-aliyun
+      file: docker-ce
+      description: docker-ce-aliyun
+      baseurl: http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+    become: yes
+
+  - name: Change kubernetes to aliyun source
+    shell: | 
+      cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+      EOF
+      setenforce 0
+      yum install -y kubelet kubeadm kubectl
+    when: result is failed
+    become: true
+    ignore_errors: yes
   
   - name: Install bash-completion
     yum:
@@ -64,7 +99,7 @@
         - docker-ce
         - docker-ce-cli
         - containerd.io
-        - "@^gnome-desktop-environment"
+        #- "@^gnome-desktop-environment"
       state: present
     become: yes
     notify: 
@@ -99,6 +134,7 @@
     get_url:
       url: https://raw.githubusercontent.com/libvirt/libvirt/master/src/network/default.xml
       dest: /tmp/kvm-network-default.xml
+    ignore_errors: yes
 
   - name: Define kvm default network
     shell: virsh net-define /tmp/kvm-network-default.xml && virsh net-start default
