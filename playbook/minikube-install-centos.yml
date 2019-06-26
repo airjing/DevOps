@@ -10,22 +10,23 @@
   - name: rename to minikube
     hostname:
       name: minikube
-
-  - name: Get the latest version number of kubernetes
-    shell: "curl https://storage.googleapis.com/kubernetes-release/release/stable.txt"      
-    register: version
-  - debug: var=version.stdout
-
-  - name: Download latest kubectl from mirror.azure.cn
-    get_url: 
-      url: "http://mirror.kaiyuanshe.cn/kubernetes/kubectl/{{ version.stdout }}/bin/linux/amd64/kubectl"
-      dest: /usr/local/bin/
-      mode: +x 
-    async: 30
-    poll: 5   
-    register: result
-    ignore_errors: True
     become: yes
+
+  #- name: Get the latest version number of kubernetes
+  #  shell: "curl https://storage.googleapis.com/kubernetes-release/release/stable.txt"      
+  #  register: version
+  #- debug: var=version.stdout
+
+  #- name: Download latest kubectl from mirror.azure.cn
+  #  get_url: 
+  #    url: "http://mirror.kaiyuanshe.cn/kubernetes/kubectl/{{ version.stdout }}/bin/linux/amd64/kubectl"
+  #    dest: /usr/local/bin/
+  #    mode: +x 
+  #  async: 30
+  #  poll: 5   
+  #  register: result
+  #  ignore_errors: True
+  #  become: yes
   
   - name: Backup CentOS-Base.repo
     shell: cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
@@ -78,27 +79,27 @@
     shell: grep -E 'vmx|svm' /proc/cpuinfo
     become: yes
 
-  - name: Set up stable repository
-    shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-    become: yes
+#  - name: Set up stable repository
+#    shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+#    become: yes
 
 #https://computingforgeeks.com/install-kvm-centos-rhel-ubuntu-debian-sles-arch/
   - name: Install packages of kvm,docker...
     yum:
       name:
-        - qemu-kvm
-        - qemu-img
-        - virt-manager
-        - libvirt
-        - libvirt-python
-        - libvirt-client
-        - libvirt-daemon-kvm
-        - virt-install
-        - virt-viewer
-        - bridge-utils
+#        - qemu-kvm
+#        - qemu-img
+#        - virt-manager
+#        - libvirt
+#        - libvirt-python
+#        - libvirt-client
+#        - libvirt-daemon-kvm
+#        - virt-install
+#        - virt-viewer
+#        - bridge-utils
         - yum-utils
-        - device-mapper-persistent-data
-        - lvm2
+#        - device-mapper-persistent-data
+#        - lvm2
         - docker-ce
         - docker-ce-cli
         - containerd.io
@@ -110,79 +111,81 @@
         - wget
         - curl-devel
         - "@^Development Tools"
-        - "@^gnome-desktop-environment"
+        #- "@^gnome-desktop-environment"
       state: present
     become: yes
     notify: 
       - reboot
   
-  - name: Download golang
-    get_url:
-      url: http://mirror.kaiyuanshe.cn/go/go1.12.6.linux-amd64.tar.gz
-      dest: /tmp/go1.12.6.linux-amd64.tar.gz
-      force: yes
+#  - name: Download golang
+#    get_url:
+#      url: http://mirror.kaiyuanshe.cn/go/go1.12.6.linux-amd64.tar.gz
+#      dest: /tmp/go1.12.6.linux-amd64.tar.gz
+#      force: yes
 
-  - name: Install golang
-    shell: tar -C /usr/local -xzf /tmp/go1.12.6.linux-amd64.tar.gz
-    become: yes
+#  - name: Install golang
+#    shell: tar -C /usr/local -xzf /tmp/go1.12.6.linux-amd64.tar.gz
+#    become: yes
 
-  - name: Set environment variable for golang
-    lineinfile:
-      path: ~/.bash.profile
-      insertafter: EOF
-      line: GOPATH=~/go
-      state: present
-      create: yes
+#  - name: Set environment variable for golang
+#    lineinfile:
+#      path: ~/.bash.profile
+#      insertafter: EOF
+#      line: GOPATH=~/go
+#      state: present
+#      create: yes
 
-  - name: Download latest git
-    get_url:
-      url: https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.22.0.tar.gz
-      dest: /tmp/git-2.22.0.tar.gz
-  
-  - name: Install latest git
-    shell: |      
-      tar -zxvf /tmp/git-2.22.0.tar.gz
-      cd /tmp/git-2.22.0
-      autoconf
-      ./configure
-      make -j8 install
-      rm -f /tmp/git-2.22.0.tar.gz
-      rm -rf /tmp/git-2.22.0
-    become: yes
+#- name: Download latest git
+#  get_url:
+#    url: https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.22.0.tar.gz
+#    dest: /tmp/git-2.22.0.tar.gz
+#  ignore_errors: yes
 
-  - name: Git Clone minikube
-    git: 
-      repo: https://github.com/kubernetes/minikube
-      dest: ~/Repos/minikube
-      clone: yes
+#- name: Install latest git
+#  shell: |      
+#    tar -zxvf /tmp/git-2.22.0.tar.gz
+#    cd /tmp/git-2.22.0
+#    autoconf
+#    ./configure
+#    make -j8 install
+#    rm -f /tmp/git-2.22.0.tar.gz
+#    rm -rf /tmp/git-2.22.0
+#  become: yes
+#  ignore_errors: yes
 
-  - name: Remove kernel 3.10
-    yum:
-      name: 
-        - kernel-tools-3.10*
-        - kernel-3.10.*
-        - kernel-tools-libs-3.10*
-      state: absent
-    become: yes
-    notify:
-      - reboot
-    ignore_errors: yes
+#- name: Git Clone minikube
+#  git: 
+#    repo: https://github.com/kubernetes/minikube
+#    dest: ~/Repos/minikube
+#    clone: yes
 
-  - name: Add user vagrant to libvirt group
-    user:
-      name: vagrant
-      state: present
-      groups: 
-        - libvirt
-        - docker
-    become: yes    
+#- name: Remove kernel 3.10
+#  yum:
+#    name: 
+#      - kernel-tools-3.10*
+#      - kernel-3.10.*
+#      - kernel-tools-libs-3.10*
+#    state: absent
+#  become: yes
+#  notify:
+#    - reboot
+#  ignore_errors: yes
 
-  - name: Enable libvirtd
-    service:
-      name: libvirtd
-      state: started
-      enabled: yes
-    become: yes
+#  - name: Add user vagrant to libvirt group
+#    user:
+#      name: vagrant
+#      state: present
+#      groups: 
+#        - libvirt
+#        - docker
+#    become: yes    
+
+#  - name: Enable libvirtd
+#    service:
+#      name: libvirtd
+#      state: started
+#      enabled: yes
+#    become: yes
 
   - name: Create kvm default network configuration file
     shell: |
@@ -199,19 +202,19 @@
       </network>
       EOF      
   
-  - name: Download kvm default network configuration file
-    get_url:
-      url: https://raw.githubusercontent.com/libvirt/libvirt/master/src/network/default.xml
-      dest: /tmp/kvm-network-default1.xml
-    ignore_errors: yes
+#  - name: Download kvm default network configuration file
+#    get_url:
+#      url: https://raw.githubusercontent.com/libvirt/libvirt/master/src/network/default.xml
+#      dest: /tmp/kvm-network-default1.xml
+#    ignore_errors: yes
 
-  - name: Define kvm default network
-    shell: |
-      ipvirsh net-define /tmp/kvm-network-default.xml
-      virsh net-start default
-    become: yes
-    ignore_errors: yes
-    # refer to https://computingforgeeks.com/how-to-create-and-configure-bridge-networking-for-kvm-in-linux/
+#  - name: Define kvm default network
+#    shell: |
+#      ipvirsh net-define /tmp/kvm-network-default.xml
+#      virsh net-start default
+#    become: yes
+#    ignore_errors: yes
+#    # refer to https://computingforgeeks.com/how-to-create-and-configure-bridge-networking-for-kvm-in-linux/
 
   - name: Enable docker
     service:
@@ -222,43 +225,40 @@
 
   - name: Download latest Minikube
     get_url:
-      url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+      url: https://github.com/kubernetes/minikube/releases/download/v1.2.0/minikube-linux-amd64
       dest: /tmp/minikube
       mode: +x
-    async: 20
-    poll: 5
     ignore_errors: yes
 
-  - name: Copy minikube file
-    copy: src=files/minikube-linux-amd64 dest=/tmp/minikube
+ #- name: Copy minikube file
+ #  copy: src=files/minikube-linux-amd64 dest=/tmp/minikube
 
   - name: Install Minikube
     shell: install /tmp/minikube /usr/local/bin
     become: yes
+    ignore_errors: yes
   
 #https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#vm-driver
-  - name: Install Docker Machine KVM driver
-    get_url:
-      url: https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-kvm2
-      dest: /usr/local/bin/docker-machine-driver-kvm2
-      mode: +x
-    async: 20
-    poll: 5
-    become: yes
-    ignore_errors: yes
+#  - name: Install Docker Machine KVM driver
+#    get_url:
+#      url: https://github.com/kubernetes/minikube/releases/download/v1.2.0/docker-machine-driver-kvm2
+#      dest: /usr/local/bin/docker-machine-driver-kvm2
+#      mode: +x
+#    become: yes
+#    ignore_errors: yes
 
-  - name: Copy kvm2 driver if googleapis is unreachable.
-    copy: src=files/docker-machine-driver-kvm2 dest=/usr/local/bin/docker-machine-driver-kvm2
-    become: yes 
+#- name: Copy kvm2 driver if googleapis is unreachable.
+#  copy: src=files/docker-machine-driver-kvm2 dest=/usr/local/bin/docker-machine-driver-kvm2
+#  become: yes 
   
-  - name: chmod for kvm2 driver
-    file:
-      path: /usr/local/bin/docker-machine-driver-kvm2
-      mode: +x
-    become: yes
+#- name: chmod for kvm2 driver
+#  file:
+#    path: /usr/local/bin/docker-machine-driver-kvm2
+#    mode: +x
+#  become: yes
 
   - name: Start Minikube
-    shell: minikube config set vm-driver kvm2 && minikube start --image-repository gcr.azk8s.cn/google_containers
+    shell: minikube config set vm-driver none && minikube start --image-repository gcr.azk8s.cn/google_containers
     async: 300
     poll: 10
 
