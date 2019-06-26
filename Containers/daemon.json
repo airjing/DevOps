@@ -1,5 +1,5 @@
 {
-  "registry-mirrors": [ "https://registry.docker-cn.com"],
+  "registry-mirrors": [ "https://registry.docker-cn.com","https://dockerhub.azk8s.cn/library","https://gcr.azk8s.cn/google_containers"],
   "data-root": "F:\\ApplicationsData\\.docker",
   "bridge" : "none"
 }

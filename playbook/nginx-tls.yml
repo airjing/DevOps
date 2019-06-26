@@ -36,7 +36,7 @@
     notify: restart nginx
 
   - name: enable configuration
-    file: dest=/etc/nginx/sites-enabled/default src={{ conf_file}} state=link
+    file: dest=/etc/nginx/sites-enabled/default src={{ conf_file }} state=link
     notify: restart nginx
 
   - name: copy index.html

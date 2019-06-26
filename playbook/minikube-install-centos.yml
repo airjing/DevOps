@@ -14,52 +14,45 @@
   - name: Get the latest version number of kubernetes
     shell: "curl https://storage.googleapis.com/kubernetes-release/release/stable.txt"      
     register: version
-    async: 5
-    poll: 1
-    ignore_errors: True
   - debug: var=version.stdout
 
-  #- name: Download latest release to local by curl
-  #  shell: "curl https://storage.googleapis.com/kubernetes-release/release/{{ version.stdout }}/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl --connect-timeout 5"    
-  #  ignore_errors: True
-  #  become: yes 
-
-  - name: Download latest release to local(from Google)
+  - name: Download latest kubectl from mirror.azure.cn
     get_url: 
-      url: 'https://storage.googleapis.com/kubernetes-release/release/{{ version.stdout }}/bin/linux/amd64/kubectl'
-      dest: /usr/local/bin/kubectl
-      mode: +x
-      timeout: 2
-    async: 10
-    poll: 5
+      url: "http://mirror.kaiyuanshe.cn/kubernetes/kubectl/{{ version.stdout }}/bin/linux/amd64/kubectl"
+      dest: /usr/local/bin/
+      mode: +x 
+    async: 30
+    poll: 5   
     register: result
     ignore_errors: True
     become: yes
   
-  - name: Change CentOS7 source to aliyun
-    shell: |
-      mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
-      curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-      sudo yum makecache
+  - name: Backup CentOS-Base.repo
+    shell: cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+    become: yes
+    ignore_errors: yes
 
-  - name: Change docker-ce source to aliyun
-    shell: yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+  - name: change centos7 base repo to azure mirror
+    copy: src=files/CentOS-Base.repo dest=/etc/yum.repos.d/CentOS-Base.repo      
     become: yes
 
-  - name: Change kubernetes to aliyun source
+  - name: Change docker-ce source to azure mirror
+    shell: yum-config-manager --add-repo http://mirror.kaiyuanshe.cn/docker-ce/linux/centos/docker-ce.repo
+    become: yes
+
+  - name: Change kubernetes to azure mirror
     shell: | 
       cat <<EOF > /etc/yum.repos.d/kubernetes.repo
       [kubernetes]
-      name=Kubernetes
-      baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+      name=Kubernetes      
+      baseurl=http://mirror.kaiyuanshe.cn/kubernetes/packages/yum/repos/kubernetes-el7-x86_64/
       enabled=1
       gpgcheck=1
       repo_gpgcheck=1
-      gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+      gpgkey=http://mirror.kaiyuanshe.cn/kubernetes/packages/yum/doc/yum-key.gpg http://mirror.kaiyuanshe.cn/kubernetes/packages/yum/doc/rpm-package-key.gpg
       EOF
       setenforce 0
-      yum install -y kubelet kubeadm kubectl
-    when: result is failed
+      yum install -y kubelet kubeadm kubectl    
     become: true
     ignore_errors: yes
   
@@ -76,6 +69,7 @@
       insertafter: EOF
       line: source /usr/share/bash-completion/bash_completion
       state: present
+      create: yes
 
   - name: Eanble shell autocompletion
     shell: echo 'source <(kubectl completion bash)' >>~/.bashrc
@@ -89,7 +83,7 @@
     become: yes
 
 #https://computingforgeeks.com/install-kvm-centos-rhel-ubuntu-debian-sles-arch/
-  - name: Install KVM & docker
+  - name: Install packages of kvm,docker...
     yum:
       name:
         - qemu-kvm
@@ -116,7 +110,7 @@
         - wget
         - curl-devel
         - "@^Development Tools"
-        #- "@^gnome-desktop-environment"
+        - "@^gnome-desktop-environment"
       state: present
     become: yes
     notify: 
@@ -124,11 +118,12 @@
   
   - name: Download golang
     get_url:
-      url: https://golang.google.cn/doc/install?download=go1.12.6.linux-amd64.tar.gz
+      url: http://mirror.kaiyuanshe.cn/go/go1.12.6.linux-amd64.tar.gz
       dest: /tmp/go1.12.6.linux-amd64.tar.gz
+      force: yes
 
   - name: Install golang
-    shell: tar -C /usr/local -xzf go1.12.6.linux-amd64.tar.gz
+    shell: tar -C /usr/local -xzf /tmp/go1.12.6.linux-amd64.tar.gz
     become: yes
 
   - name: Set environment variable for golang
@@ -136,7 +131,8 @@
       path: ~/.bash.profile
       insertafter: EOF
       line: GOPATH=~/go
-
+      state: present
+      create: yes
 
   - name: Download latest git
     get_url:
@@ -262,7 +258,7 @@
     become: yes
 
   - name: Start Minikube
-    shell: minikube config set vm-driver kvm2 && minikube start
+    shell: minikube config set vm-driver kvm2 && minikube start --image-repository gcr.azk8s.cn/google_containers
     async: 300
     poll: 10
 
