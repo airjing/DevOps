@@ -1,11 +1,46 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
+# AIO to install minikube
 Vagrant.configure("2") do |config|
   config.ssh.insert_key = false
-# VM as 1st host of kolla, also called all-in-one
-# Manuall created two NICs.
-# eth0 - Docker NAT switch. static IP 10.0.75.10
-# eth1 - Default swtich connect to external network, DHCPed.
+  config.vm.define "minikube" do |m|
+    m.vm.box = "centos7"
+    m.vm.hostname = "minikube"
+    m.vm.provider "hyperv" do |h|
+      h.vmname = "Vagrant-minikube"
+      h.cpus = 8
+      h.memory = 4096
+      h.maxmemory = nil  
+      h.linked_clone = true
+      h.enable_virtualization_extensions = true
+    end
+  end
+  config.vm.define "kubemaster" do |k|
+    k.vm.box = "centos7"
+    k.vm.hostname = "kubemaster"
+    k.vm.provider "hyperv" do |h|
+      h.vmname = "Vagrant-kubemaster"
+      h.cpus = 8
+      h.memory = 2048
+      h.maxmemory = nil  
+      h.linked_clone = true
+      h.enable_virtualization_extensions = true
+    end
+  end  
+  (1..3).each do |i|
+    config.vm.define "kubenode-#{i}" do |node|
+      node.vm.box = "centos7"
+      node.vm.hostname = "kubenode-#{i}"
+      node.vm.provider "hyperv" do |h|
+        h.vmname = "Vagrant-kubenode-#{i}"
+        h.cpus = 8
+        h.memory = 4096
+        h.maxmemory = nil  
+        h.linked_clone = true
+        h.enable_virtualization_extensions = true
+      end
+    end
+  end
   config.vm.define "kolla" do |a|
     a.vm.box = "generic/ubuntu1604"
     a.vm.hostname = "kolla"
@@ -16,24 +51,24 @@ Vagrant.configure("2") do |config|
       h.linked_clone = true
       h.enable_virtualization_extensions = true
     end
-    a.vm.provision "file",source: "163-xenial.list",destination: "$HOME/163-xenial.list"
-    a.vm.provision "file",source: "installkolla.sh",destination: "$HOME/installkolla.sh"
-    a.vm.provision "file",source: "sshkey.sh",destination: "$HOME/sshkey.sh"
+    #a.vm.provision "file",source: "files/163-xenial.list",destination: "$HOME/163-xenial.list"
+    #a.vm.provision "file",source: "files/installkolla.sh",destination: "$HOME/installkolla.sh"
+    #a.vm.provision "file",source: "files/sshkey.sh",destination: "$HOME/sshkey.sh"
     a.vm.provision "shell" do |s0|
       run = "always"
-      s0.inline = "chmod 755 installkolla.sh"
+      s0.inline = "chmod 755 files/installkolla.sh"
     end
     a.vm.provision "shell" do |s1|
       run = "always"
-      s1.path = "installkolla.sh"
+      s1.path = "files/installkolla.sh"
     end
     a.vm.provision "shell" do |s2|
       run = "always"
-      s2.inline = "chmod 755 sshkey.sh"
+      s2.inline = "chmod 755 files/sshkey.sh"
     end
     a.vm.provision "shell" do |s3|
       run = "runonce"
-      s3.path = "sshkey.sh"
+      s3.path = "files/sshkey.sh"
     end
     # if synced_folder mount failed on domain joined machine, manually mount it.
     # sudo mount.cifs //10.164.103.105/e$/Development/DevOps/playbook ~/playbook -o username=username,domain=domainname,password=passwd

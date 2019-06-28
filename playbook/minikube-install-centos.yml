@@ -194,7 +194,8 @@
       state: started
       enabled: yes
     become: yes
-
+# Create a network configuration file for kvm. or download it from below link directly.
+#https://raw.githubusercontent.com/libvirt/libvirt/master/src/network/default.xml
   - name: Create kvm default network configuration file
     shell: |
       cat <<EOF > /tmp/kvm-network-default.xml
@@ -208,17 +209,11 @@
           </dhcp>
         </ip>
       </network>
-      EOF      
-  
-#  - name: Download kvm default network configuration file
-#    get_url:
-#      url: https://raw.githubusercontent.com/libvirt/libvirt/master/src/network/default.xml
-#      dest: /tmp/kvm-network-default1.xml
-#    ignore_errors: yes
-
+      EOF
+      
   - name: Define kvm default network
     shell: |
-      ipvirsh net-define /tmp/kvm-network-default.xml
+      virsh net-define /tmp/kvm-network-default.xml
       virsh net-start default
     become: yes
     ignore_errors: yes
@@ -248,6 +243,7 @@
       src: files/minikube_cache.tar
       copy: yes      
       dest: ~/.minikube/
+      owner: vagrant
 
   - name: Install Minikube
     shell: |
@@ -255,6 +251,7 @@
       install /home/vagrant/.minikube/cache/minikube-linux-amd64 /usr/local/bin
       cp /home/vagrant/.minikube/cache/docker-machine-driver-kvm2 /usr/local/bin/
       chmod +x /usr/local/bin/docker-machine-driver-kvm2
+      chown -R vagrant /home/vagrant/.minikube
     become: yes
     ignore_errors: yes  
 
@@ -278,7 +275,7 @@
 #    become: yes
 
   - name: Start Minikube
-    shell: minikube config set vm-driver kvm2 && minikube start    
+    shell: minikube config set vm-driver kvm2 && minikube start --image-repository gcr.azk8s.cn/google_containers
 
   - name: Create a Deployment
     shell: kubectl create deployment hello-node --image=hello-minikube-zero-install/hello-node --image-repository gcr.azk8s.cn/google_containers
