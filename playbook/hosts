@@ -3,6 +3,6 @@ ubuntu ansible_host=192.168.2.90 ansible_user=shaojc
 centos ansible_host=192.168.2.91 ansible_user=shaojc
 kolla01 ansible_host=192.168.2.201 ansible_user=ansible
 kolla02 ansible_host=192.168.2.202 ansible_user=ansible
-minikube ansible_host=10.164.121.43 ansible_user=vagrant ansible_become_user=root ansible_become_password=vagrant
+minikube ansible_host=10.164.121.64 ansible_user=vagrant ansible_password=vagrant ansible_become_user=root ansible_become_password=vagrant
 [office]
 box ansible_host=10.164.121.49  ansible_user=vagrant ansible_password=vagrant ansible_become_user=root ansible_become_password=vagrant

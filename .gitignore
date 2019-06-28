@@ -3,3 +3,4 @@
 Vagrant/BuildAnsibleServer/playbook/venv
 .vagrant
 *.tar
+*.zip

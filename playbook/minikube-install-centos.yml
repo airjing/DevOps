@@ -7,14 +7,47 @@
 # 
 # https://computingforgeeks.com/how-to-run-minikube-on-kvm/
 - hosts: minikube
-  gather_facts: yes
+  gather_facts: false
   vars:
 
   remote_user: root
   tasks: 
-  - name: rename to minikube
+  - name: Install sshkey
+    authorized_key:
+      user: vagrant
+      key: "{{ lookup('file','~/.ssh/id_rsa.pub') }}"
+      state: present
+    become: yes
+
+  - name: rename to k8sminikube
     hostname:
-      name: minikube
+      name: k8sminikube
+    become: yes
+
+  - name: Disable firewall
+    service:
+      name: firewalld
+      enabled: no
+      state: stopped
+    become: yes
+
+  - name: Enable bridge-nf-call-iptables
+    blockinfile:
+      path: /etc/sysctl.conf
+      insertafter: EOF
+      block: |
+        net.bridge.bridge-nf-call-ip6tables = 1
+        net.bridge.bridge-nf-call-iptables = 1
+        net.ipv4.ip_forward = 1
+      state: present
+    become: yes
+
+  - name: Apply Change by sysctl -p
+    shell: sysctl -p
+    become: yes
+
+  - name: Disable swap
+    shell: swapoff -a
     become: yes
 
 # - name: Get the latest version number of kubernetes
@@ -117,6 +150,7 @@
         - openssl-devel
         - wget
         - curl-devel
+        - unzip
 #       - "@^Development Tools"
 #       - "@^gnome-desktop-environment"
       state: present
@@ -196,28 +230,28 @@
     become: yes
 # Create a network configuration file for kvm. or download it from below link directly.
 #https://raw.githubusercontent.com/libvirt/libvirt/master/src/network/default.xml
-  - name: Create kvm default network configuration file
-    shell: |
-      cat <<EOF > /tmp/kvm-network-default.xml
-      <network>
-        <name>default</name>
-        <bridge name="virbr0"/>
-        <forward/>
-        <ip address="192.168.122.1" netmask="255.255.255.0">
-          <dhcp>
-            <range start="192.168.122.2" end="192.168.122.254"/>
-          </dhcp>
-        </ip>
-      </network>
-      EOF
+  # - name: Create kvm default network configuration file
+  #   shell: |
+  #     cat <<EOF > /tmp/kvm-network-default.xml
+  #     <network>
+  #       <name>default</name>
+  #       <bridge name="virbr0"/>
+  #       <forward/>
+  #       <ip address="192.168.122.1" netmask="255.255.255.0">
+  #         <dhcp>
+  #           <range start="192.168.122.2" end="192.168.122.254"/>
+  #         </dhcp>
+  #       </ip>
+  #     </network>
+  #     EOF
       
-  - name: Define kvm default network
-    shell: |
-      virsh net-define /tmp/kvm-network-default.xml
-      virsh net-start default
-    become: yes
-    ignore_errors: yes
-    # refer to https://computingforgeeks.com/how-to-create-and-configure-bridge-networking-for-kvm-in-linux/
+  # - name: Define kvm default network
+  #   shell: |
+  #     virsh net-define /tmp/kvm-network-default.xml
+  #     virsh net-start default
+  #   become: yes
+  #   ignore_errors: yes
+  #   # refer to https://computingforgeeks.com/how-to-create-and-configure-bridge-networking-for-kvm-in-linux/
 
   - name: Enable docker
     service:
@@ -238,49 +272,30 @@
       path: ~/.minikube
       state: directory
   
-  - name: Extrace tar file to ~/.minikube/
+  - name: Extrace ziped cache folder to ~/.minikube/
     unarchive:
-      src: files/minikube_cache.tar
+      src: files/cache.zip
       copy: yes      
       dest: ~/.minikube/
       owner: vagrant
 
-  - name: Install Minikube
-    shell: |
-      chmod +x /home/vagrant/.minikube/cache/minikube-linux-amd64 
-      install /home/vagrant/.minikube/cache/minikube-linux-amd64 /usr/local/bin
-      cp /home/vagrant/.minikube/cache/docker-machine-driver-kvm2 /usr/local/bin/
+#https://github.com/kubernetes/minikube/releases/download/v1.2.0/docker-machine-driver-kvm2
+  - name: Copy minikube binary & kvm2 driver
+    shell: | 
+      cp /home/vagrant/.minikube/docker-machine-driver-kvm2 dest=/usr/local/bin/docker-machine-driver-kvm2
       chmod +x /usr/local/bin/docker-machine-driver-kvm2
-      chown -R vagrant /home/vagrant/.minikube
-    become: yes
-    ignore_errors: yes  
+      cp /home/vagrant/.minikube/minikube-linux-amd64 /usr/local/bin/minikube
+      chmod +x /usr/local/bin/minikube
+    become: yes 
 
-#https://github.com/kubernetes/minikube/blob/master/docs/drivers.md#vm-driver
-#  - name: Install Docker Machine KVM driver
-#    get_url:
-#      url: https://github.com/kubernetes/minikube/releases/download/v1.2.0/docker-machine-driver-kvm2
-#      dest: /usr/local/bin/docker-machine-driver-kvm2
-#      mode: +x
-#    become: yes
-#    ignore_errors: yes
+  # - name: Start Minikube
+  #   shell: minikube config set vm-driver kvm2 && minikube start
 
-#- name: Copy kvm2 driver if googleapis is unreachable.
-#  copy: src=files/docker-machine-driver-kvm2 dest=/usr/local/bin/docker-machine-driver-kvm2
-#  become: yes 
-  
-#  - name: chmod for kvm2 driver
-#    file:
-#      path: /usr/local/bin/docker-machine-driver-kvm2
-#      mode: +x
-#    become: yes
-
-  - name: Start Minikube
-    shell: minikube config set vm-driver kvm2 && minikube start --image-repository gcr.azk8s.cn/google_containers
-
-  - name: Create a Deployment
-    shell: kubectl create deployment hello-node --image=hello-minikube-zero-install/hello-node --image-repository gcr.azk8s.cn/google_containers
+  # - name: Create a Deployment
+  #   shell: kubectl create deployment hello-node --image=hello-minikube-zero-install/hello-node --image-repository gcr.azk8s.cn/google_containers
 
   handlers:
     - name: reboot
       shell: reboot now
       become: yes
+      kubectl run hello-minikube --image=k8s.gcr.io/echoserver:1.10 --port=8080 --image-repository gcr.azk8s.cn/google_containers
