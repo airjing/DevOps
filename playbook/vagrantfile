@@ -26,6 +26,10 @@ Vagrant.configure("2") do |config|
       h.linked_clone = true
       h.enable_virtualization_extensions = true
     end
+    k.vm.provision "shell" do |s|
+      run = "runonce"
+      s.inline = "nmcli con mod eth0 connection.autoconnect yes"
+    end
   end  
   (1..3).each do |i|
     config.vm.define "kubenode-#{i}" do |node|
@@ -38,6 +42,10 @@ Vagrant.configure("2") do |config|
         h.maxmemory = nil  
         h.linked_clone = true
         h.enable_virtualization_extensions = true
+      end
+      k.vm.provision "shell" do |s|
+        run = "runonce"
+        s.inline = "nmcli con mod eth0 connection.autoconnect yes"
       end
     end
   end

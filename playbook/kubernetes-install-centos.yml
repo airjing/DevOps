@@ -1,0 +1,158 @@
+---
+# This playbook is going to install kubernetes on CentOS7 system.
+# The installation plan inlcude one master node and three worker nodes.
+- hosts: kubernetes
+  gather_facts: false
+  remote_user: root
+  tasks:
+  - name: Install sshkey
+    authorized_key:
+      user: vagrant
+      key: "{{ lookup('file','~/.ssh/id_rsa.pub') }}"
+      state: present
+    become: yes  
+
+  - name: Disable firewall
+    service:
+      name: firewalld
+      enabled: no
+      state: stopped
+    become: yes
+
+  - name: Disable swap
+    shell: |
+      swapoff -a
+      sed -i 's/.*swap.*/#&/' /etc/fstab
+    become: yes
+
+  - name: Backup CentOS-Base.repo
+    shell: cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.backup
+    become: yes
+    ignore_errors: yes
+
+  - name: change centos7 base repo to azure mirror
+    copy: src=files/CentOS-Base.repo dest=/etc/yum.repos.d/CentOS-Base.repo      
+    become: yes
+
+  - name: Change docker-ce source to azure mirror
+    shell: yum-config-manager --add-repo http://mirror.kaiyuanshe.cn/docker-ce/linux/centos/docker-ce.repo
+    become: yes
+
+  - name: Set SELinux in permissive mode(effectively disabling it)
+    shell: |
+      setenforce 0
+      sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+    become: yes
+
+  - name: load br_netfilter module
+    shell: modprobe br_netfilter
+    become: yes
+
+#Some users on RHEL/CentOS 7 have reported issues with traffic being routed 
+#incorrectly due to iptables being bypassed. You should ensure 
+#net.bridge.bridge-nf-call-iptables is set to 1 in your sysctl config, e.g.
+  - name: change iptables
+    blockinfile:
+      path: /etc/sysctl.conf
+      insertafter: EOF
+      block: |
+        net.bridge.bridge-nf-call-ip6tables = 1
+        net.bridge.bridge-nf-call-iptables = 1
+        net.ipv4.ip_forward = 1
+      state: present
+    become: yes      
+
+  - name: Change kubernetes to aliyun mirror
+    shell: | 
+      cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+      [kubernetes]
+      name=Kubernetes
+      baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+      enabled=1
+      gpgcheck=1
+      repo_gpgcheck=1
+      gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+      EOF
+      setenforce 0
+      yum install -y kubelet kubeadm kubectl
+      systemctl enable kubelet && systemctl start kubelet
+    become: true
+    ignore_errors: yes
+  - name: Install docker-ce
+    yum:
+      name:
+        - bind
+        - bind-utils
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - zlib-devel
+        - perl-ExtUtils-MakeMaker
+        - asciidoc
+        - xmlto
+        - openssl-devel
+        - wget
+        - curl-devel
+        - unzip
+#       - "@^Development Tools"
+#       - "@^gnome-desktop-environment"
+      state: present
+    become: yes
+    notify: 
+      - reboot
+  
+  - name: Setup daemon
+    shell: |
+      mkdir /etc/docker
+      cat > /etc/docker/daemon.json <<EOF
+      {
+        "exec-opts": ["native.cgroupdriver=systemd"],
+        "log-driver": "json-file",
+        "log-opts": {
+        "max-size": "100m"
+        },
+      "storage-driver": "overlay2",
+      "storage-opts": [
+        "overlay2.override_kernel_check=true"
+        ]
+      }
+      EOF
+    become: yes
+
+  - name: Add user vagrant to libvirt group
+    user:
+      name: vagrant
+      state: present
+      groups: 
+        - docker
+    become: yes  
+
+  - name: Enable docker
+    service:
+      name: docker
+      state: started
+      enabled: yes
+    become: yes
+
+  - name: Get Mac Address and product_uuid
+    shell: |
+      hostname
+      ifconfig -a
+      cat /sys/class/dmi/id/product_uuid
+    become: yes
+
+  - name: init k8s cluster
+    shell: |
+      kubeadm init --kubernetes-version=1.15.0 \
+      --apiserver-advertise-address=10.164.121.43 \
+      --image-repository gcr.azk8s.cn/google_containers \
+      --service-cidr=10.1.0.0/16 \
+      --pod-network-cidr=10.244.0.0/16
+
+  handlers:
+    - name: reboot
+      shell: reboot now
+      become: yes

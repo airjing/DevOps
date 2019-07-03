@@ -298,4 +298,3 @@
     - name: reboot
       shell: reboot now
       become: yes
-      kubectl run hello-minikube --image=k8s.gcr.io/echoserver:1.10 --port=8080 --image-repository gcr.azk8s.cn/google_containers
