@@ -13,7 +13,7 @@ html5lib==0.9999999
 Mezzanine==4.2.2
 oauthlib>=2.0.l
 olefile==0.43
-Pillow==4.0.0
+Pillow==6.2.0
 psycopg2==2.6.2
 python-memcached==1.58
 pytz==2016.10
