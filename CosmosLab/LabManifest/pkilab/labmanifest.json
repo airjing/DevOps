@@ -1,0 +1,102 @@
+{
+    "Operator":  "Mediaroom",
+    "Customer": "ServerTeam",
+    "Name":  "PKI",
+    "DNSServer":"10.164.70.100",
+    "VirtualHosts":[
+        {
+            "Host": "localhost",
+            "Credential" : "administrator:P@ssword",
+            "hypervisor": "Hyper-V",
+            "VMHome": "D:\\VMHome",
+            "RAM": "32GB",
+            "vSwitch": [
+                {
+                    "Name":"New Virtual Switch",
+                    "Type":"External"
+                }
+            ] 
+        }    
+    ],
+    "WindowsAD":
+            {
+                "LocalAdministratorPassword" : "P@ssword1!",
+                "DomainAdmin": "administrator",
+                "DomainAdminPassword": "P@ssword1!",
+                "Prefix": "pki",
+                "DCEdition": 4,
+                "DomainNetbiosName": "pki",
+                "DomainName": "pki.rnea.iptv.mr.ericsson.se",
+                "RegisteredOrganization": "Mediakind",
+                "RegisteredOwner": "Mediakind",
+                "Computers": 
+                    [{
+                        "Name": "PKI-DC-01",
+                        "Role": "DomainController",
+                        "HWProfile": "v2",
+                        "OSProfile":"WinSrv2012R2",
+                        "OSVHDTemplate":"WinSrv2012R2_STD_GUI_G2.vhdx",
+                        "Host": "localhost",
+                        "Networking": [
+                            {
+                                "vSwitchType" :"External",
+                                "Type":"Static",
+                                "IPAddress":"10.164.70.100",
+                                "PrefixLength":"24",
+                                "Gateway":"10.164.70.1"
+                            }
+                        ]
+                    },
+                    {
+                        "Name": "PKI-ROOTCA-01",
+                        "Role": "CertificateAuthority",
+                        "HWProfile": "v2",
+                        "OSProfile":"WinSrv2012R2",
+                        "OSVHDTemplate":"WinSrv2012R2_STD_GUI_G2.vhdx",
+                        "Host": "localhost",
+                        "Networking": [
+                            {
+                                "vSwitchType" :"External",
+                                "Type":"Static",
+                                "IPAddress":"10.164.70.101",
+                                "PrefixLength":"24",
+                                "Gateway":"10.164.70.1"
+                            }
+                        ]
+                    },
+                    {
+                        "Name": "PKI-ICA-01",
+                        "Role": "CertificateAuthority",
+                        "HWProfile": "v2",
+                        "OSProfile":"WinSrv2012R2",
+                        "OSVHDTemplate":"WinSrv2012R2_STD_GUI_G2.vhdx",
+                        "Host": "localhost",
+                        "Networking": [
+                            {
+                                "vSwitchType" :"External",
+                                "Type":"Static",
+                                "IPAddress":"10.164.70.102",
+                                "PrefixLength":"24",
+                                "Gateway":"10.164.70.1"
+                            }
+                        ]
+                    },
+                    {
+                        "Name": "PKI-ICA-02",
+                        "Role": "CertificateAuthority",
+                        "HWProfile": "v2",
+                        "OSProfile":"WinSrv2012R2",
+                        "OSVHDTemplate":"WinSrv2012R2_STD_GUI_G2.vhdx",
+                        "Host": "localhost",
+                        "Networking": [
+                            {
+                                "vSwitchType" :"External",
+                                "Type":"Static",
+                                "IPAddress":"10.164.70.103",
+                                "PrefixLength":"24",
+                                "Gateway":"10.164.70.1"
+                            }
+                        ]
+                    }]
+            } 
+}

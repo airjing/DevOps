@@ -1,0 +1,115 @@
+{    
+    "ISOStore": "F:\\Software\\ISO\\Microsoft", 
+    "DataStore" : "", 
+    "HardwareProfiles":[
+        {
+            "Profile": "v2",
+            "CpuCores": 2,
+            "Generation" : 2,
+            "MemoryStartupBytes":"2GB",
+            "NetAdapters":[
+                {
+                    "Name": "Lab"
+                }
+            ],
+            "Storage":[
+                {
+                    "Size": "100GB",
+                    "Label": "OS",
+                    "Type" : "Different"
+                }
+            ]
+        },
+        {
+            "Profile": "v4",
+            "CpuCores": 4,
+            "Generation" : 2,
+            "MemoryStartupBytes":"4GB",
+            "NetAdapters":[
+                {
+                    "Name": "Lab"
+                }
+            ],
+            "Storage":[
+                {
+                    "Size": "100GB",
+                    "Label": "OS"
+                }
+            ]
+        }
+    ],
+    "OSProfiles": [
+        {
+            "Profile":"WinSrv2008SP2",
+            "ISO":"en_windows_server_2008_with_sp2_x64_dvd_342336.iso",
+            "VHDTemplates":[                
+                {
+                    "VHDTemplate": "Windows.Server.2008.ENT.x64.SP2.Preq.2017Q4.vhdx", 
+                    "VHDSize": "100GB"
+                }
+            ]
+        },
+        {
+            "Profile":"WinSrv2012R2",
+            "version" : "6.3.9600",
+            "ISO":"Windows_Server_2012_R2_Datacenter_EN_US_X64.iso",
+            "sxs" : "Package\\WindowsServer2012R2\\sources\\sxs",
+            "VHDTemplates":[
+                {
+                    "VHDTemplate": "STD_CORE_G2.vhdx", 
+                    "VHDSize": "60GB"
+                },
+                {
+                    "VHDTemplate": "STD_GUI_G2.vhdx", 
+                    "VHDSize": "100GB",
+                    "Status" : "enabled"
+                },
+                {
+                    "VHDTemplate": "DC_CORE_G2.vhdx", 
+                    "VHDSize": "60GB"
+                },
+                {
+                    "VHDTemplate": "DC_GUI_G2.vhdx", 
+                    "VHDSize": "100GB"
+                }
+            ]
+        },
+        {
+            "Profile":"WinSrv2019",
+            "ISO":"en_windows_server_2019_updated_sept_2019_x64_dvd_199664ce.iso",
+            "VHDTemplates":[
+                {
+                    "VHDTemplate": "STD_CORE_G2.vhdx", 
+                    "VHDSize": "60GB"
+                },
+                {
+                    "VHDTemplate": "STD_GUI_G2.vhdx", 
+                    "VHDSize": "100GB"
+                },
+                {
+                    "VHDTemplate": "DC_Core_G2.vhdx", 
+                    "VHDSize": "60GB"
+                },
+                {
+                    "VHDTemplate": "DC_GUI_G2.vhdx", 
+                    "VHDSize": "100GB"
+                }
+            ]
+        }
+    ],
+    "SQLProfiles" : [
+        {
+            "Profile": "SQLServer2014_standard",
+            "ISO" : "en_sql_server_2014_standard_edition_with_service_pack_2_x64_dvd_8961564",
+            "PID" : "",
+            "ConfigurationFile" : ".\\configurationfile.ini"
+        },
+        {
+            "Profile": "SQLServer2014_enterprise",
+            "ISO" : "en_sql_server_2014_enterprise_edition_with_service_pack_2_x64_dvd_8961564",
+            "PID" : "",
+            "ConfigurationFile" : ".\\configurationfile.ini"
+        }
+
+    ]    
+}
