@@ -24,6 +24,14 @@ $ops = @{
         }
                 
 function Get-ComputerInfo {
+<#
+.EXAMPLE
+$lines = Get-Content C:\Users\shaojc\Repos\BJLABOPS\CosmosLab\LabManifest\pkilab\mr.txt
+foreach($l in $lines)
+{
+    Get-ComputerInfo -ComputerName localhost | Export-Xml -OutputFile ..\localhost.xml
+}
+#>
     param (
         [Parameter(Mandatory = $false,ValueFromPipeline = $true)]
         [string]
@@ -1748,6 +1756,9 @@ function Build-Lab{
 .DESCRIPTION
 Build Lab
 
+.EXAMPLE
+Build-Lab -LabProfileFile .\en03B\en03.json -Machine "FARM01-DB-02"
+
 #>
     param(
         [Parameter(Mandatory = $true)]
@@ -1931,6 +1942,81 @@ function ExecProcess([string]$cmdline, [string]$cmdargs,[string]$LogFile)
 
 	return $ret
 }
+
+function Get-MediaroomDBPatch{
+    <#
+    .DESCRIPTION
+    Get Installed Software on Windows Computers.
+    
+    .PARAMETER Computer
+    Get Installed software on this computer.
+    
+    .PARAMETER Database
+    Get installed MR DB Patch in this Database.
+    
+    .OUTPUTS
+    Array
+    
+    #>
+        param(        
+            [Parameter(Mandatory = $true)]
+            [string]
+            $Computer,        
+            [Parameter(Mandatory = $true)]
+            [string]
+            $Database
+        )
+        $select = @"    
+        SELECT [SchemaChangeLogId]
+        ,[SchemaChangeDescription]
+        ,[Status]     
+        ,[SchemaFamilyId]
+        ,[FamilyName]     
+        ,[PackageName]
+        ,[PackageDescription]
+        ,[InstallDate]
+        ,[InstalledBy]
+        ,[InstallId]
+    FROM [LiveBackend].[MSTVSchemaVersion].[view_SchemaChanges]
+    Order By InstallDate
+"@
+    #Define connction string of database
+	$connectionString = "Data Source=$Computer;Integrated Security=true;Initial Catalog=$Database;User ID=xxx\labagent;Password=xxx"
+    # connection object initialization
+	$conn = New-Object System.Data.SqlClient.SqlConnection($connectionString)
+    #Open the Connection 
+    try {
+        $conn.Open()
+        # Prepare the SQL 
+        $cmd = $conn.CreateCommand()
+        $cmd.CommandText = $select
+        $reader = $cmd.ExecuteReader() 
+        $rows = @()
+        while($reader.Read())
+        {
+            $row = @{
+                "SchemaChangeLogId" = $reader[0]
+                "SchemaChangeDescription" = $reader[1]
+                "Status" = $reader[2]
+                "SchemaFamilyId" = $reader[3]
+                "FamilyName" = $reader[4]
+                "PackageName" = $reader[5]
+                "PackageDescription" = $reader[6]
+                "InstallDate" = $reader[7]
+                "InstalledBy" = $reader[8]
+                "InstallId" = $reader[9]
+            }            
+            $rows += $row
+        }
+        return $rows   
+    }
+    catch {
+        WriteError $_.Exception.Message
+    }
+    finally{
+        $conn.Close()
+    }    
+}
 function  Uninstall-Software {
     param (
         
@@ -1940,20 +2026,4 @@ function  Uninstall-Software {
     )
     #Symantec 14.0
     msiexec /uninstall {577FBFA6-33CB-4D9A-8286-0DF9236E5A59} /q /norestart
-}
-
-#Start-PrerequestCheck
-#
-#Build-Lab -LabProfile $LabProfile
-#$b = Get-ServerList -ServerLayout ".\EN03B\FARM01_serverLayout.xml"
-#foreach($m in $b.computers)
-#{
-#    Get-ComputerInfo -ComputerName $m.Values | Export-Xml
-#}
-#Get-ComputerInfo
-#Build-Lab -LabProfileFile .\en03B\en03.json -Machine "FARM01-DB-02"
-$lines = Get-Content C:\Users\shaojc\Repos\BJLABOPS\CosmosLab\LabManifest\pkilab\mr.txt
-foreach($l in $lines)
-{
-    Get-ComputerInfo -ComputerName localhost | Export-Xml -OutputFile ..\localhost.xml
 }
