@@ -461,7 +461,7 @@ function Import-DockerImages
     )
     if (Test-Path $ImportFromPath)
     {
-        if(($TarFileList -ne $null) -or ($TarFileList -ne ""))
+        if($TarFileList)
         {
             $imagefiles = $TarFileList.Split(";")      
         }
@@ -471,7 +471,14 @@ function Import-DockerImages
         }
         foreach ($f in $imagefiles)
             {
-                & docker load -i $f
+                try{
+                    Write-Host "Importing $f to Docker daemon..."
+                    & docker.exe load -i $f.FullName
+                    Write-Host "Importing $f to Docker daemon..." -ForegroundColor Green
+                }
+                catch{
+                    Write-Host "Failed on import $f to docker daemon..." -ForegroundColor Red
+                }                
             }  
     }
     else {
@@ -494,4 +501,4 @@ function Pull-DockerImages
 
 #Pull-DockerImages
 #Export-DockerImages -ExportToPath $ImageStore
-#Import-DockerImages -ImportFromPath $ImageStore
+Import-DockerImages -ImportFromPath "$home\.minikube\cache\images"
