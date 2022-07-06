@@ -9,7 +9,7 @@ filebrowser-safe==0.4.6
 future==0.16.0
 grappelli-safe==0.4.5
 gunicorn==19.6.0
-html5lib==0.9999999
+html5lib==0.999999999
 Mezzanine==4.2.2
 oauthlib>=2.0.l
 olefile==0.43
